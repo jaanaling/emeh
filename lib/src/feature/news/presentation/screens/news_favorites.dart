@@ -17,68 +17,75 @@ class NewsFavorites extends StatefulWidget {
 class _NewsFavoritesState extends State<NewsFavorites> {
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<bool>(
-      stream: NetworkHelper.isConnected().asStream(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: Container(
-              decoration: BoxDecoration(
-                color: NewsTheme.color.unselectedFilter,
-                borderRadius: BorderRadius.circular(27),
-              ),
-              child: const CupertinoActivityIndicator(),
-            ),
-          );
-        }
-        if (snapshot.data == false) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'No internet connection',
-                style: NewsTheme.text.detailedTitle,
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {});
-                },
-                child: Text(
-                  'Try again',
-                  style:
-                      NewsTheme.text.detailedTitle.copyWith(color: Colors.blue),
+    return ValueListenableBuilder(
+      valueListenable: NetworkHelper.isConnected,
+      builder: (context, value, child) {
+        return StreamBuilder<bool>(
+          stream: NetworkHelper.connected().asStream(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: NewsTheme.color.unselectedFilter,
+                    borderRadius: BorderRadius.circular(27),
+                  ),
+                  child: const CupertinoActivityIndicator(),
                 ),
-              ),
-            ],
-          );
-        } else {
-          return BlocBuilder<NewsBloc, NewsState>(
-            builder: (context, state) {
-              return state is NewsLoaded
-                  ? state.favorites.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No favorites',
-                            style: NewsTheme.text.detailedTitle,
-                          ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(19, 35, 19, 195),
-                          itemCount: state.favorites.length,
-                          shrinkWrap: true,
-                          separatorBuilder: (BuildContext context, int index) =>
-                              const Gap(16),
-                          itemBuilder: (BuildContext context, int index) =>
-                              NewsTile(
-                            news: state.favorites[index],
-                            isFavorite: true,
-                            isFavoriteScreen: true,
-                          ),
-                        )
-                  : const Center(child: CircularProgressIndicator());
-            },
-          );
-        }
+              );
+            }
+            if (snapshot.data == false) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'No internet connection',
+                    style: NewsTheme.text.detailedTitle,
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {});
+                    },
+                    child: Text(
+                      'Try again',
+                      style: NewsTheme.text.detailedTitle
+                          .copyWith(color: Colors.blue),
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              return BlocBuilder<NewsBloc, NewsState>(
+                builder: (context, state) {
+                  return state is NewsLoaded
+                      ? state.favorites.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No favorites',
+                                style: NewsTheme.text.detailedTitle,
+                              ),
+                            )
+                          : ListView.separated(
+                              padding:
+                                  const EdgeInsets.fromLTRB(19, 35, 19, 195),
+                              itemCount: state.favorites.length,
+                              shrinkWrap: true,
+                              separatorBuilder:
+                                  (BuildContext context, int index) =>
+                                      const Gap(16),
+                              itemBuilder: (BuildContext context, int index) =>
+                                  NewsTile(
+                                news: state.favorites[index],
+                                isFavorite: true,
+                                isFavoriteScreen: true,
+                              ),
+                            )
+                      : const Center(child: CircularProgressIndicator());
+                },
+              );
+            }
+          },
+        );
       },
     );
   }

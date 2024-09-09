@@ -32,26 +32,27 @@ class _NewsScreenState extends State<NewsScreen> {
     super.dispose();
   }
 
-  void onTap(int index) {
+  void onTap(int index, BuildContext context) {
     setState(() {
       if (NewsHelper.selectedIndex == index) {
         NewsHelper.selectedIndex = -1;
       } else {
         NewsHelper.selectedIndex = index;
       }
-
-      context.read<NewsBloc>().add(
-            FetchNews(
-              category: NewsHelper.selectedIndex == -1
-                  ? ''
-                  : Category.categories[index].name,
-            ),
-          );
-      NewsHelper.controller.clear();
-
-      // Прокручиваем список до выбранного элемента
-      _scrollToSelectedIndex(index);
     });
+
+    _scrollToSelectedIndex(index);
+
+    context.read<NewsBloc>().add(
+          FetchNews(
+            category: NewsHelper.selectedIndex == -1
+                ? ''
+                : Category.categories[index].name,
+          ),
+        );
+    NewsHelper.controller.clear();
+
+    // Прокручиваем список до выбранного элемента
   }
 
   void _scrollToSelectedIndex(int index) {
@@ -77,126 +78,132 @@ class _NewsScreenState extends State<NewsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<bool>(
-      stream: NetworkHelper.isConnected().asStream(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: Container(
-              decoration: BoxDecoration(
-                color: NewsTheme.color.unselectedFilter,
-                borderRadius: BorderRadius.circular(27),
-              ),
-              child: const CupertinoActivityIndicator(),
+    return Column(
+      children: [
+        const Gap(28),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 19),
+          child: CupertinoTextField(
+            style: NewsTheme.text.detailedDate,
+            decoration: BoxDecoration(
+              color: NewsTheme.color.cardColor,
+              borderRadius: BorderRadius.circular(13),
             ),
-          );
-        }
-        if (snapshot.data == false) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'No internet connection',
-                style: NewsTheme.text.detailedTitle,
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {});
-                },
-                child: Text(
-                  'Try again',
-                  style:
-                      NewsTheme.text.detailedTitle.copyWith(color: Colors.blue),
-                ),
-              ),
-            ],
-          );
-        } else {
-          return Column(
-            children: [
-              const Gap(28),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 19),
-                child: CupertinoTextField(
-                  style: NewsTheme.text.detailedDate,
-                  decoration: BoxDecoration(
-                    color: NewsTheme.color.cardColor,
-                    borderRadius: BorderRadius.circular(13),
+            controller: NewsHelper.controller,
+            keyboardType: TextInputType.text,
+            placeholder: 'Search',
+            textInputAction: TextInputAction.search,
+            clearButtonMode: OverlayVisibilityMode.editing,
+            onTapOutside: (event) => FocusScope.of(context).unfocus(),
+            prefix: IconButton(
+              onPressed: () => context.read<NewsBloc>().add(
+                    SearchNews(query: NewsHelper.controller.text.trim()),
                   ),
-                  controller: NewsHelper.controller,
-                  keyboardType: TextInputType.text,
-                  placeholder: 'Search',
-                  textInputAction: TextInputAction.search,
-                  clearButtonMode: OverlayVisibilityMode.editing,
-                  onTapOutside: (event) => FocusScope.of(context).unfocus(),
-                  prefix: IconButton(
-                    onPressed: () => context.read<NewsBloc>().add(
-                          SearchNews(query: NewsHelper.controller.text.trim()),
+              icon: const Icon(Icons.search, size: 32),
+              iconSize: 32,
+              color: NewsTheme.color.icon,
+            ),
+            onChanged: (value) {
+              context.read<NewsBloc>().add(
+                    SearchNews(query: value),
+                  );
+            },
+          ),
+        ),
+        const Gap(34),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.055,
+          child: ListView.separated(
+            itemCount: Category.categories.length,
+            shrinkWrap: true,
+            physics: const BouncingScrollPhysics(),
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 19),
+            controller: _scrollController,
+            separatorBuilder: (BuildContext context, int index) => const Gap(7),
+            itemBuilder: (BuildContext context, int index) => CategoryTile(
+              category: Category.categories[index].name,
+              isSelected: NewsHelper.selectedIndex == index,
+              onTap: onTap,
+              index: index,
+            ),
+          ),
+        ),
+        const Gap(22),
+        ValueListenableBuilder(
+          valueListenable: NetworkHelper.isConnected,
+          builder: (context, value, child) {
+            return StreamBuilder<bool>(
+                stream: NetworkHelper.connected().asStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: NewsTheme.color.unselectedFilter,
+                          borderRadius: BorderRadius.circular(27),
                         ),
-                    icon: const Icon(Icons.search, size: 32),
-                    iconSize: 32,
-                    color: NewsTheme.color.icon,
-                  ),
-                  onChanged: (value) {
-                    context.read<NewsBloc>().add(
-                          SearchNews(query: value),
-                        );
-                  },
-                ),
-              ),
-              const Gap(34),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.055,
-                child: ListView.separated(
-                  itemCount: Category.categories.length,
-                  shrinkWrap: true,
-                  physics: const BouncingScrollPhysics(),
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 19),
-                  controller: _scrollController,
-                  separatorBuilder: (BuildContext context, int index) =>
-                      const Gap(7),
-                  itemBuilder: (BuildContext context, int index) =>
-                      CategoryTile(
-                    category: Category.categories[index].name,
-                    isSelected: NewsHelper.selectedIndex == index,
-                    onTap: onTap,
-                    index: index,
-                  ),
-                ),
-              ),
-              const Gap(22),
-              BlocBuilder<NewsBloc, NewsState>(
-                builder: (context, state) {
-                  return state is NewsLoaded
-                      ? Expanded(
-                          child: ListView.separated(
-                            physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.only(
-                              bottom: 160,
-                              left: 19,
-                              right: 19,
-                            ),
-                            itemCount: state.newsList.length,
-                            shrinkWrap: true,
-                            separatorBuilder:
-                                (BuildContext context, int index) =>
-                                    const Gap(16),
-                            itemBuilder: (BuildContext context, int index) =>
-                                NewsTile(
-                              news: state.newsList[index],
-                              isFavorite: state.favorites
-                                  .contains(state.newsList[index]),
+                        child: const CupertinoActivityIndicator(),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.data == false) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'No internet connection',
+                            style: NewsTheme.text.detailedTitle,
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {});
+                            },
+                            child: Text(
+                              'Try again',
+                              style: NewsTheme.text.detailedTitle
+                                  .copyWith(color: Colors.blue),
                             ),
                           ),
-                        )
-                      : const Center(child: CircularProgressIndicator());
-                },
-              ),
-            ],
-          );
-        }
-      },
+                        ],
+                      ),
+                    );
+                  } else {
+                    return BlocBuilder<NewsBloc, NewsState>(
+                      builder: (context, state) {
+                        return state is NewsLoaded
+                            ? Expanded(
+                                child: ListView.separated(
+                                  physics: const BouncingScrollPhysics(),
+                                  padding: const EdgeInsets.only(
+                                    bottom: 160,
+                                    left: 19,
+                                    right: 19,
+                                  ),
+                                  itemCount: state.newsList.length,
+                                  shrinkWrap: true,
+                                  separatorBuilder:
+                                      (BuildContext context, int index) =>
+                                          const Gap(16),
+                                  itemBuilder:
+                                      (BuildContext context, int index) =>
+                                          NewsTile(
+                                    news: state.newsList[index],
+                                    isFavorite: state.favorites
+                                        .contains(state.newsList[index]),
+                                  ),
+                                ),
+                              )
+                            : const Center(child: CircularProgressIndicator());
+                      },
+                    );
+                  }
+                });
+          },
+        )
+      ],
     );
   }
 }

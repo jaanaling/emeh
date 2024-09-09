@@ -1,8 +1,11 @@
 import 'package:connectivity/connectivity.dart';
+import 'package:flutter/cupertino.dart';
 
 class NetworkHelper {
-  static Future<bool> isConnected() async {
+  static ValueNotifier<bool> isConnected = ValueNotifier<bool>(false);
+
+  static Future<bool> connected() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+    return isConnected.value = connectivityResult != ConnectivityResult.none;
   }
 }

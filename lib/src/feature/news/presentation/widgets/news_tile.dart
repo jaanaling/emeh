@@ -22,6 +22,8 @@ class NewsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width * 0.34;
+    final height = MediaQuery.of(context).size.height * 0.146;
     return GestureDetector(
       onTap: () => context.pushNamed(
         RouteValue.detailed.name,
@@ -34,7 +36,7 @@ class NewsTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(13),
         ),
         child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.146,
+          height: height,
           child: Row(
             children: [
               ClipRRect(
@@ -45,13 +47,20 @@ class NewsTile extends StatelessWidget {
                 child: Image.network(
                   news.urlToImage,
                   fit: BoxFit.cover,
-                  width: MediaQuery.of(context).size.width * 0.34,
-                  height: MediaQuery.of(context).size.height * 0.146,
+                  width: width,
+                  height: height,
                   loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
+                    if (loadingProgress == null)
+                      return DecoratedBox(
+                          decoration: BoxDecoration(
+                              image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: NetworkImage(
+                                      'https://www.generationsforpeace.org/wp-content/uploads/2018/03/empty-300x240.jpg'))),
+                          child: child);
                     return Container(
-                      width: MediaQuery.of(context).size.width * 0.34,
-                      height: MediaQuery.of(context).size.height * 0.146,
+                      width: width,
+                      height: height,
                       decoration: BoxDecoration(
                         color: NewsTheme.color.unselectedFilter,
                         borderRadius: const BorderRadius.only(
@@ -64,8 +73,8 @@ class NewsTile extends StatelessWidget {
                   },
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      width: MediaQuery.of(context).size.width * 0.34,
-                      height: MediaQuery.of(context).size.height * 0.146,
+                      width: width,
+                      height: height,
                       decoration: BoxDecoration(
                         color: NewsTheme.color.unselectedFilter,
                         borderRadius: const BorderRadius.only(

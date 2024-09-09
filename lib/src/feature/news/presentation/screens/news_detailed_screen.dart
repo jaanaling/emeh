@@ -57,7 +57,6 @@ class _NewsDetailedScreenState extends State<NewsDetailedScreen> {
                       : context
                           .read<NewsBloc>()
                           .add(AddToFavorites(widget.news));
-                  _isFavorite = !_isFavorite;
                   _isFavorite
                       ? showCustomSnackBar(
                           context,
@@ -67,6 +66,7 @@ class _NewsDetailedScreenState extends State<NewsDetailedScreen> {
                           context,
                           'News added to favorites',
                         );
+                  _isFavorite = !_isFavorite;
                 }),
                 icon: Icon(
                   _isFavorite ? Icons.star : Icons.star_border,
@@ -88,9 +88,11 @@ class _NewsDetailedScreenState extends State<NewsDetailedScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    widget.news.source,
-                    style: NewsTheme.text.detailedDate,
+                  Expanded(
+                    child: Text(
+                      widget.news.source,
+                      style: NewsTheme.text.detailedDate,
+                    ),
                   ),
                   Text(
                     widget.news.publishedAt,

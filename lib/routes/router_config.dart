@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:test_app/routes/root_screen.dart';
 import 'package:test_app/routes/route_value.dart';
+import 'package:test_app/src/core/theme/a_colors.dart';
 import 'package:test_app/src/core/utils/log.dart';
 import 'package:test_app/src/feature/news/models/news_model.dart';
 import 'package:test_app/src/feature/news/presentation/screens/news_detailed_screen.dart';
@@ -19,7 +21,9 @@ GoRouter buildRouter() {
     routes: <RouteBase>[
       StatefulShellRoute.indexedStack(
         pageBuilder: (context, state, navigationShell) {
-          return NoTransitionPage(
+          return slideTransition(
+            context: context,
+            state: state,
             child: RootScreen(
               navigationShell: navigationShell,
             ),
@@ -30,13 +34,18 @@ GoRouter buildRouter() {
             navigatorKey: _newsNavigatorKey,
             routes: <RouteBase>[
               GoRoute(
-                path: RouteValue.news.path, // Top-level route starts with '/'
-                builder: (context, state) => NewsScreen(key: UniqueKey()),
+                path: RouteValue.news.path,
+                pageBuilder: (context, state) => slideTransition(
+                  context: context,
+                  state: state,
+                  child: NewsScreen(key: UniqueKey()),
+                ),
                 routes: [
                   GoRoute(
-                    path: RouteValue.detailed.path, // Sub-route without '/'
+                    parentNavigatorKey: _newsNavigatorKey,
+                    path: RouteValue.detailed.path,
                     name: RouteValue.detailed.name,
-                    builder: (context, state) {
+                    pageBuilder: (context, state) {
                       final extra = state.extra! as Map<String, dynamic>;
                       final isFavorite = extra['isFavorite'] as bool;
                       final news = extra['news'] as News;
@@ -44,10 +53,14 @@ GoRouter buildRouter() {
                       logger.d(news.title);
                       logger.d(isFavorite);
 
-                      return NewsDetailedScreen(
-                        key: UniqueKey(),
-                        news: news,
-                        isFavorite: isFavorite,
+                      return slideTransition(
+                        context: context,
+                        state: state,
+                        child: NewsDetailedScreen(
+                          key: UniqueKey(),
+                          news: news,
+                          isFavorite: isFavorite,
+                        ),
                       );
                     },
                   ),
@@ -61,11 +74,16 @@ GoRouter buildRouter() {
               GoRoute(
                 path: RouteValue
                     .favorites.path, // Top-level route starts with '/'
-                builder: (context, state) => NewsFavorites(key: UniqueKey()),
+                pageBuilder: (context, state) => slideTransition(
+                  context: context,
+                  state: state,
+                  child: NewsFavorites(key: UniqueKey()),
+                ),
                 routes: [
                   GoRoute(
+                    parentNavigatorKey: _favoritesNavigatorKey,
                     path: RouteValue.detailed.path, // Sub-route without '/'
-                    builder: (context, state) {
+                    pageBuilder: (context, state) {
                       final extra = state.extra! as Map<String, dynamic>;
                       final isFavorite = extra['isFavorite'] as bool;
                       final news = extra['news'] as News;
@@ -73,10 +91,14 @@ GoRouter buildRouter() {
                       logger.d(news.title);
                       logger.d(isFavorite);
 
-                      return NewsDetailedScreen(
-                        key: UniqueKey(),
-                        news: news,
-                        isFavorite: isFavorite,
+                      return slideTransition(
+                        context: context,
+                        state: state,
+                        child: NewsDetailedScreen(
+                          key: UniqueKey(),
+                          news: news,
+                          isFavorite: isFavorite,
+                        ),
                       );
                     },
                   ),
@@ -87,5 +109,34 @@ GoRouter buildRouter() {
         ],
       ),
     ],
+  );
+}
+
+Page slideTransition({
+  required BuildContext context,
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage(
+    child: child,
+    key: state.pageKey,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return Stack(
+        
+        children: [
+           Positioned.fill(
+            child: ColoredBox(
+              color: CupertinoColors.lightBackgroundGray,
+              child:  child,
+            ),
+
+          ),
+         
+        ],
+      );
+    },
+    transitionDuration: const Duration(
+      milliseconds: 500,
+    ),
   );
 }

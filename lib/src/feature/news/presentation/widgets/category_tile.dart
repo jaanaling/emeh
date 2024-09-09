@@ -4,7 +4,7 @@ import 'package:test_app/src/feature/news/theme/theme.dart';
 class CategoryTile extends StatelessWidget {
   final String category;
   final bool isSelected;
-  final Function(int) onTap;
+  final Function(int, BuildContext) onTap;
   final int index;
 
   const CategoryTile({
@@ -18,7 +18,7 @@ class CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => onTap(index),
+      onTap: () => onTap(index, context),
       child: AnimatedContainer(
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 11),
         decoration: BoxDecoration(
