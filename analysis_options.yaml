@@ -1,0 +1,16 @@
+include: package:lint/strict.yaml
+
+linter:
+  rules:
+    directives_ordering: false
+    prefer_single_quotes: true
+    empty_statements: true
+    empty_constructor_bodies: true
+    avoid_classes_with_only_static_members : false
+    parameter_assignments: false
+
+analyzer:
+  errors:
+    avoid_dynamic_calls: false
+  exclude:
+    - "**/*.g.dart"
